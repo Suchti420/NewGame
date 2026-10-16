@@ -1,0 +1,25 @@
+{
+  "name": "zeittraeger",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "description": "ZEITTRÄGER — Echos der vergessenen Stadt. Cozy-Extraction mit Fragile-Carry, Rucksack-Puzzle und Zeit-Budget. Privates Android-Spiel.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test tests/rng.test.ts tests/geometry.test.ts tests/shapes.test.ts tests/echoes.test.ts tests/config.test.ts tests/world.test.ts tests/scoring.test.ts tests/backpack.test.ts tests/simulation.test.ts tests/seeds.test.ts tests/determinism.test.ts tests/determinism-gate.test.ts tests/route.test.ts",
+    "sweep": "node --import tsx tests/helpers/seed-sweep.ts 20000",
+    "icons": "node scripts/make-icons.mjs",
+    "android:sync": "node scripts/sync-android-assets.mjs",
+    "android:apk": "bash scripts/build-apk.sh",
+    "verify": "npm run typecheck && npm run test && npm run sweep && npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "tsx": "^4.23.15",
+    "typescript": "~5.9.3",
+    "vite": "^8.3.4"
+  }
+}

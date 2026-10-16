@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZEITTRÄGER — Echos der vergessenen Stadt</title>
+<style>:root{--bg:#0d1321;--panel:#1a2340;--accent:#ffd166;--accent2:#6ff7d6;--danger:#ef476f;--text:#f1faee}*{box-sizing:border-box}body{background:var(--bg);color:var(--text);flex-direction:column;align-items:center;min-height:100vh;margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif;display:flex}header{flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;width:100%;max-width:980px;padding:18px 18px 6px;display:flex}h1{letter-spacing:.5px;margin:0;font-size:clamp(22px,3.5vw,34px)}h1 span{color:var(--accent)}.sub{opacity:.8;max-width:620px;font-size:14px}#wrap{flex-wrap:wrap;justify-content:center;gap:14px;width:100%;max-width:980px;padding:10px 18px 22px;display:flex}#left{flex:560px;min-width:300px}#hud{flex-wrap:wrap;gap:10px;margin:8px 0;display:flex}.pill{background:var(--panel);border:1px solid #2d3a66;border-radius:999px;padding:6px 12px;font-size:14px}.pill b{color:var(--accent)}canvas{aspect-ratio:16/10;image-rendering:auto;background:#0a0f1f;border:1px solid #2d3a66;border-radius:14px;width:100%;height:auto;box-shadow:0 10px 40px #00000080}#side{flex-direction:column;flex:0 320px;gap:10px;min-width:280px;display:flex}.card{background:var(--panel);border:1px solid #2d3a66;border-radius:14px;padding:12px 14px}.card h3{color:var(--accent);text-transform:uppercase;letter-spacing:.8px;margin:0 0 6px;font-size:15px}.card p,.card li{opacity:.92;font-size:13.5px;line-height:1.5}#carry{flex-wrap:wrap;gap:8px;display:flex}.echo-chip{background:#111a33;border:1px solid #444;border-radius:10px;padding:6px 8px;font-size:12px}button{background:var(--accent);color:#111;cursor:pointer;border:0;border-radius:10px;padding:10px 14px;font-size:14px;font-weight:700}button.ghost{color:var(--text);background:0 0;border:1px solid #3a4a7a}button:hover{filter:brightness(1.1)}#backpackModal{z-index:10;background:#000000b3;justify-content:center;align-items:center;padding:16px;display:none;position:fixed;top:0;bottom:0;left:0;right:0}#bpBox{background:#141c38;border:1px solid #3a4a7a;border-radius:16px;width:100%;max-width:560px;padding:16px}#bpGrid{grid-template-columns:repeat(6,1fr);gap:4px;margin:10px 0;display:grid}.cell{aspect-ratio:1;background:#0d1430;border:1px solid #2c3a68;border-radius:6px}.cell.filled{border-color:#0000}#bpItems{flex-wrap:wrap;gap:8px;margin:8px 0;display:flex}.bp-item{cursor:pointer;border:2px solid #0000;border-radius:10px;padding:8px 10px;font-size:13px}.bp-item.sel{border-color:#fff}#toast{z-index:20;background:#000d;border:1px solid #444;border-radius:999px;padding:10px 16px;font-size:14px;display:none;position:fixed;bottom:18px;left:50%;transform:translate(-50%)}kbd{background:#000;border:1px solid #444;border-radius:6px;padding:1px 6px;font-size:12px}details{opacity:.9;font-size:13px}#overlay{z-index:5;background:#080c1aeb;justify-content:center;align-items:center;padding:20px;display:flex;position:fixed;top:0;bottom:0;left:0;right:0}#ovBox{background:#141c38;border:1px solid #3a4a7a;border-radius:18px;max-width:640px;padding:24px}#ovBox h2{color:var(--accent);margin-top:0}.novel{border-left:4px solid var(--accent2);margin:10px 0;padding-left:10px;font-size:14px}</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>ZEITTRÄGER <span>— Echos der vergessenen Stadt</span></h1>
+    <div class="sub">Neuartiges Genre: <b>Cozy-Extraction × Fragile-Carry × Rucksack-Puzzle × Zeit-Budget + Daily-Seed</b>. Kein Kampf. Kein HP. Nur Zerbrechlichkeit. Trage Erinnerungen, bevor der Tag (180s) resettet.</div>
+  </div>
+  <div class="pill">Daily-Seed: <b id="seedLabel">–</b></div>
+</header>
+
+<div id="wrap">
+  <div id="left">
+    <div id="hud">
+      <div class="pill">⏳ Zeit <b id="hTime">180</b>s</div>
+      <div class="pill">💠 Extrahiert <b id="hScore">0</b></div>
+      <div class="pill">🎒 Getragen <b id="hCarry">0/3</b></div>
+      <div class="pill">🌫️ Vergessen <b id="hFog">0%</b></div>
+      <div class="pill">🏆 Best (heute) <b id="hBest">0</b></div>
+    </div>
+    <canvas id="game" width="800" height="500"></canvas>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+      <button id="btnPack">🎒 Rucksack packen (Q) — nur am Portal</button>
+      <button id="btnDrop" class="ghost">Ablegen (X)</button>
+      <button id="btnRestart" class="ghost">Neuer Tag (R)</button>
+      <button id="btnHelp" class="ghost">Hilfe (H)</button>
+    </div>
+  </div>
+  <div id="side">
+    <div class="card">
+      <h3>So spielt man</h3>
+      <ul style="margin:0;padding-left:18px">
+        <li><kbd>WASD</kbd> / Pfeile laufen, <kbd>Shift</kbd> = sprinten (riskant!)</li>
+        <li><kbd>E</kbd> = Echo aufheben, <kbd>X</kbd> = vorsichtig ablegen</li>
+        <li>Bringe Echos zum <b>goldenen Portal</b>. Dort <kbd>Q</kbd> → Tetris-Rucksack puzzle.</li>
+        <li><b>Anstoßen = Wertverlust!</b> Sprint + Wand = -25% Integrität. Langsam = sicher.</li>
+        <li>Der Nebel frisst die Stadt. Tag endet nach 180s. Score bleibt als Daily-Best.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Getragen</h3>
+      <div id="carry"><span style="opacity:.6;font-size:13px">Noch nichts. Suche leuchtende Echos.</span></div>
+    </div>
+    <div class="card">
+      <h3>Warum ist das neu?</h3>
+      <details open>
+        <summary><b>Deep-Research-Ergebnis (2024-2026)</b></summary>
+        <p>Übersättigt: Roguelike-Deckbuilder, Survivors-Klone, Cozy-Farming, Soulslike, Tarkov-Kopie, BR.<br>
+        Hits beweisen 5 Prinzipien: 1 heilige Regel brechen (Balatro), clipbar in 20s (Buckshot/R.E.P.O.), Zerbrechlichkeit statt HP (R.E.P.O.), Grind automatisieren (Palworld), 80% verstecken (Animal Well).</p>
+        <p><b>ZEITTRÄGER kombiniert 4 unterversorgte Gaps erstmals:</b> Cozy-Extraction (Singleplayer, gewaltfrei) + Fragile-Carry-Physik + Inventar-Puzzle als Skill + Zeit als Währung + Daily-Ritual. Das gibt es so nicht.</p>
+      </details>
+    </div>
+    <div class="card">
+      <h3>Log</h3>
+      <div id="log" style="font-size:13px;max-height:120px;overflow:auto;opacity:.9"></div>
+    </div>
+  </div>
+</div>
+
+<div id="backpackModal">
+  <div id="bpBox">
+    <h3 style="margin:0;color:var(--accent)">🎒 RUCKSACK — packe clever für Combos</h3>
+    <p style="font-size:13px;opacity:.85;margin:6px 0">Klicke ein Echo, dann Kacheln zum Platzieren. <kbd>R</kbd> rotiert. Gleiche Farben nebeneinander = <b>x2 Combo</b>. Nur was in den Rucksack passt, wird extrahiert!</p>
+    <div id="bpItems"></div>
+    <div id="bpGrid"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button id="bpConfirm">✅ Extrahieren</button>
+      <button id="bpRotate" class="ghost">🔄 Rotieren (R)</button>
+      <button id="bpClose" class="ghost">Schließen (Q)</button>
+    </div>
+    <p id="bpPreview" style="font-size:13px"></p>
+  </div>
+</div>
+
+<div id="overlay">
+  <div id="ovBox">
+    <h2>Willkommen, Zeitträger.</h2>
+    <p>Du bist kein Krieger. Du bist Pfleger einer sterbenden Stadt. Jeden Tag (180 Sekunden Echtzeit) setzt sich die Stadt aus deinem Daily-Seed neu zusammen. Sammle <b>8 Echos</b> — zerbrechliche Erinnerungen — und trage sie zum Portal.</p>
+    <div class="novel"><b>Neuartig 1 — Kein HP, nur Zerbrechlichkeit:</b> Echos haben 100% Integrität. Jeder harte Stoß zieht ab. Sprinten wackelt.</div>
+    <div class="novel"><b>Neuartig 2 — Rucksack als Skill:</b> Extrahieren geht nur via Tetris-Puzzle. Form + Farbe puzzeln = Combo-Multiplikator.</div>
+    <div class="novel"><b>Neuartig 3 — Zeit als Währung + Daily:</b> Gleicher Seed den ganzen Tag für alle. Speedrun + Highscore wie NYT-Rätsel.</div>
+    <p style="font-size:13px;opacity:.8">Steuerung: WASD laufen · Shift sprinten · E aufheben · Q Rucksack am Portal · R rotieren · X ablegen</p>
+    <button id="btnStart" style="font-size:16px;padding:12px 22px">▶ Tag beginnen</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(()=>{ // ===== ZEITTRÄGER Prototype v1 =====
+const canvas=document.getElementById('game'), ctx=canvas.getContext('2d');
+const W=800,H=500;
+const DAY_MS=180*1000;
+const seedStr=new Date().toISOString().slice(0,10);
+document.getElementById('seedLabel').textContent=seedStr;
+function xmur3(s){let h=1779033703^s.length;for(let i=0;i<s.length;i++){h=Math.imul(h^s.charCodeAt(i),3432918353);h=h<<13|h>>>19;}return()=>{h=Math.imul(h^(h>>>16),2246822507);h=Math.imul(h^(h>>>13),3266489909);return(h^=h>>>16)>>>0;};}
+function mulberry32(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const rng=mulberry32(xmur3(seedStr)());
+
+// --- Map: simple rooms + walls ---
+const walls=[];
+// border
+walls.push({x:0,y:0,w:800,h:14},{x:0,y:486,w:800,h:14},{x:0,y:0,w:14,h:500},{x:786,y:0,w:14,h:500});
+// inner random walls from seed
+for(let i=0;i<14;i++){
+  const horiz=rng()>0.5;
+  const w=horiz?120+rng()*180:18, h=horiz?18:90+rng()*140;
+  const x=60+rng()*620, y=60+rng()*360;
+  // keep portal area free
+  if(Math.hypot(x-400,y-250)<140) continue;
+  walls.push({x,y,w,h});
+}
+const portal={x:400,y:250,r:34};
+
+// --- Echo types (name,color,shape cells,value,fragility) ---
+const SHAPES={
+  O:[[0,0],[1,0],[0,1],[1,1]],
+  I:[[0,0],[1,0],[2,0]],
+  L:[[0,0],[0,1],[0,2],[1,2]],
+  T:[[0,0],[1,0],[2,0],[1,1]],
+  S:[[1,0],[2,0],[0,1],[1,1]],
+  dot:[[0,0]],
+  P:[[0,0],[1,0],[0,1],[1,1],[0,2]],
+};
+const ECHO_DEFS=[
+  {name:"Kinderlachen",color:"#ffd166",shape:"O",value:120,frag:1.0},
+  {name:"Regengeruch",color:"#6ff7d6",shape:"I",value:90,frag:0.8},
+  {name:"Bahnhofs-Abschied",color:"#a78bfa",shape:"L",value:150,frag:1.3},
+  {name:"Ofenwärme",color:"#fb923c",shape:"T",value:110,frag:0.9},
+  {name:"Erstes Lied",color:"#f472b6",shape:"S",value:140,frag:1.2},
+  {name:"Handschrift",color:"#93c5fd",shape:"dot",value:60,frag:0.5},
+  {name:"Sommerfest",color:"#4ade80",shape:"P",value:170,frag:1.5},
+  {name:"Gute Nacht",color:"#facc15",shape:"O",value:100,frag:1.0},
+];
+let echoes=[];
+{
+  const spots=[];
+  for(let i=0;i<40 && spots.length<8;i++){
+    const x=40+rng()*720,y=40+rng()*420;
+    if(Math.hypot(x-portal.x,y-portal.y)<120) continue;
+    let bad=false;
+    for(const wl of walls){ if(x>wl.x-20&&x<wl.x+wl.w+20&&y>wl.y-20&&y<wl.y+wl.h+20){bad=true;break;} }
+    if(!bad) spots.push({x,y});
+  }
+  echoes=ECHO_DEFS.map((d,i)=>({...d,id:i,x:spots[i]?.x??100+i*80,y:spots[i]?.y??100,integrity:100,taken:false,extracted:false,phase:rng()*6.28}));
+}
+
+// --- State ---
+const player={x:400,y:330,vx:0,vy:0,r:12,speed:2.6,carry:[],wobble:0};
+let extractedScore=0, fogT=0, timeLeft=180, running=false, gameOver=false;
+let best=+(localStorage.getItem('zt_best_'+seedStr)||0);
+document.getElementById('hBest').textContent=best;
+const keys={};
+addEventListener('keydown',e=>{
+  keys[e.key.toLowerCase()]=true;
+  if(e.key.toLowerCase()==='e') tryPickup();
+  if(e.key.toLowerCase()==='x') dropCarry();
+  if(e.key.toLowerCase()==='q') toggleBackpack();
+  if(e.key.toLowerCase()==='r'){ if(bpOpen) rotateSel(); else restart(); }
+  if(e.key.toLowerCase()==='h') toggleHelp();
+});
+addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+
+function log(m){ const el=document.getElementById('log'); const d=document.createElement('div'); d.textContent='› '+m; el.prepend(d); }
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.style.display='block'; clearTimeout(t._h); t._h=setTimeout(()=>t.style.display='none',2200); }
+function beep(f=440,d=0.08,type='sine',g=0.15){ try{ const ac=beep.ac||(beep.ac=new (window.AudioContext||window.webkitAudioContext)()); const o=ac.createOscillator(),gn=ac.createGain(); o.type=type;o.frequency.value=f; gn.gain.value=g; o.connect(gn);gn.connect(ac.destination); o.start(); gn.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+d); o.stop(ac.currentTime+d);}catch{} }
+
+function collide(px,py,r){
+  for(const wl of walls){
+    const cx=Math.max(wl.x,Math.min(px,wl.x+wl.w)), cy=Math.max(wl.y,Math.min(py,wl.y+wl.h));
+    if(Math.hypot(px-cx,py-cy)<r) return wl;
+  }
+  if(px<r+14||px>W-r-14||py<r+14||py>H-r-14) return {x:0,y:0,w:1,h:1,border:true};
+  return null;
+}
+function tryPickup(){
+  if(!running||gameOver) return;
+  if(player.carry.length>=3){ toast('Rucksack-Hände voll (max 3) — bring sie zum Portal!'); return; }
+  let bestE=null,bd=1e9;
+  for(const e of echoes){ if(e.taken||e.extracted) continue; const d=Math.hypot(player.x-e.x,player.y-e.y); if(d<44&&d<bd){bd=d;bestE=e;} }
+  if(bestE){ bestE.taken=true; player.carry.push(bestE); beep(660,0.12); log(`${bestE.name} aufgenommen (${bestE.value}◆)`); toast(`Aufgehoben: ${bestE.name} — vorsichtig tragen!`); renderCarry(); }
+}
+function dropCarry(){
+  if(!player.carry.length) return;
+  const e=player.carry.pop(); e.taken=false; e.x=player.x+(Math.random()*30-15); e.y=player.y+22; e.integrity=Math.max(5,e.integrity-5);
+  beep(300,0.1); log(`${e.name} vorsichtig abgelegt (${Math.round(e.integrity)}%)`); renderCarry();
+}
+function renderCarry(){
+  const c=document.getElementById('carry'); c.innerHTML='';
+  if(!player.carry.length){ c.innerHTML='<span style="opacity:.6;font-size:13px">Noch nichts. Suche leuchtende Echos.</span>'; }
+  for(const e of player.carry){
+    const d=document.createElement('div'); d.className='echo-chip';
+    d.style.borderColor=e.color; d.style.color=e.color;
+    d.textContent=`${e.name} ${Math.round(e.integrity)}% · ${e.value}◆`;
+    c.appendChild(d);
+  }
+  document.getElementById('hCarry').textContent=player.carry.length+'/3';
+}
+
+// --- Backpack puzzle ---
+const COLS=6,ROWS=5;
+let bpOpen=false, bpGrid=Array(COLS*ROWS).fill(null), bpSel=null, bpRot=0;
+const bpItemsEl=document.getElementById('bpItems'), bpGridEl=document.getElementById('bpGrid');
+function rotCells(cells,rot){ let c=cells.map(([x,y])=>({x,y})); for(let i=0;i<rot%4;i++) c=c.map(p=>({x:-p.y,y:p.x})); const minx=Math.min(...c.map(p=>p.x)),miny=Math.min(...c.map(p=>p.y)); return c.map(p=>[p.x-minx,p.y-miny]); }
+function toggleBackpack(){
+  const nearPortal=Math.hypot(player.x-portal.x,player.y-portal.y)<portal.r+50;
+  if(!bpOpen && !nearPortal){ toast('Rucksack nur am goldenen Portal!'); beep(180,0.15,'square',0.08); return; }
+  bpOpen=!bpOpen;
+  document.getElementById('backpackModal').style.display=bpOpen?'flex':'none';
+  if(bpOpen){ renderBP(); beep(520,0.1); }
+}
+function renderBP(){
+  bpItemsEl.innerHTML='';
+  const avail=[...player.carry];
+  if(!avail.length) bpItemsEl.innerHTML='<span style="font-size:13px;opacity:.7">Keine Echos in Händen — erst einsammeln!</span>';
+  avail.forEach((e,idx)=>{
+    const b=document.createElement('div'); b.className='bp-item'+(bpSel===e?' sel':''); b.style.background=e.color+'33'; b.style.borderColor=e.color;
+    b.textContent=`${e.name} ${Math.round(e.integrity)}%`;
+    b.onclick=()=>{bpSel=e;bpRot=0;renderBP();};
+    bpItemsEl.appendChild(b);
+  });
+  bpGridEl.innerHTML='';
+  bpGrid.forEach((v,i)=>{
+    const d=document.createElement('div'); d.className='cell'+(v?' filled':'');
+    if(v){ d.style.background=v.color; }
+    d.onclick=()=>placeAt(i);
+    bpGridEl.appendChild(d);
+  });
+  updateBPPreview();
+}
+function placeAt(i){
+  if(!bpSel) { toast('Wähle erst ein Echo oben aus'); return; }
+  const cells=rotCells(SHAPES[bpSel.shape],bpRot);
+  const gx=i%COLS, gy=Math.floor(i/COLS);
+  for(const [cx,cy] of cells){ const x=gx+cx,y=gy+cy; if(x>=COLS||y>=ROWS||bpGrid[y*COLS+x]){ toast('Passt nicht hier — R rotiert, andere Lücke suchen'); beep(160,0.15,'square',0.08); return; } }
+  for(const [cx,cy] of cells){ bpGrid[(gy+cy)*COLS+gx+cx]=bpSel; }
+  player.carry=player.carry.filter(e=>e!==bpSel);
+  log(`${bpSel.name} eingepackt`); beep(740,0.12);
+  bpSel=null; renderCarry(); renderBP();
+}
+function rotateSel(){ bpRot=(bpRot+1)%4; renderBP(); }
+function comboScore(){
+  // count same-color adjacencies
+  let bonus=0;
+  const at=(x,y)=> (x<0||y<0||x>=COLS||y>=ROWS)?null:bpGrid[y*COLS+x];
+  for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){ const v=at(x,y); if(!v) continue;
+    if(at(x+1,y)===v) bonus+=10; if(at(x,y+1)===v) bonus+=10; }
+  let base=0; const seen=new Set();
+  for(const v of bpGrid){ if(v&&!seen.has(v.id)){ seen.add(v.id); base+=Math.round(v.value*v.integrity/100); } }
+  return {base,bonus,total:base+bonus};
+}
+function updateBPPreview(){ const s=comboScore(); document.getElementById('bpPreview').innerHTML=`Vorschau: Basis <b>${s.base}</b>◆ + Combo <b>${s.bonus}</b>◆ = <b>${s.total}</b>◆`; }
+document.getElementById('bpConfirm').onclick=()=>{
+  const s=comboScore();
+  if(s.base===0){ toast('Rucksack leer — erst Echos platzieren!'); return; }
+  extractedScore+=s.total;
+  // mark extracted
+  const seen=new Set(); for(const v of bpGrid){ if(v&&!seen.has(v.id)){seen.add(v.id); v.extracted=true;} }
+  bpGrid=Array(COLS*ROWS).fill(null); bpSel=null;
+  document.getElementById('hScore').textContent=extractedScore;
+  beep(880,0.2); beep(1320,0.25);
+  log(`Extrahiert: +${s.total}◆ (Basis ${s.base} + Combo ${s.bonus})`);
+  toast(`✨ +${s.total}◆ extrahiert!`);
+  if(extractedScore>best){ best=extractedScore; localStorage.setItem('zt_best_'+seedStr,best); document.getElementById('hBest').textContent=best; }
+  renderBP();
+};
+document.getElementById('bpRotate').onclick=rotateSel;
+document.getElementById('bpClose').onclick=toggleBackpack;
+document.getElementById('btnPack').onclick=toggleBackpack;
+document.getElementById('btnDrop').onclick=dropCarry;
+document.getElementById('btnRestart').onclick=()=>restart();
+document.getElementById('btnHelp').onclick=()=>toggleHelp();
+document.getElementById('btnStart').onclick=()=>{ document.getElementById('overlay').style.display='none'; running=true; log('Tag '+seedStr+' beginnt. Viel Glück, Träger.'); };
+function toggleHelp(){ const o=document.getElementById('overlay'); o.style.display=o.style.display==='none'?'flex':'none'; if(o.style.display!=='none') running=false; else if(!gameOver) running=true; }
+function restart(){ location.reload(); }
+
+// --- Loop ---
+let last=performance.now(), startT=Date.now();
+function update(dt){
+  if(!running||gameOver) return;
+  timeLeft=Math.max(0,180-(Date.now()-startT)/1000);
+  document.getElementById('hTime').textContent=Math.ceil(timeLeft);
+  fogT=Math.min(1,(Date.now()-startT)/DAY_MS);
+  document.getElementById('hFog').textContent=Math.round(fogT*100)+'%';
+  if(timeLeft<=0){ endDay(); return; }
+  const sprint=(keys['shift']||keys['shift '])?1.7:1;
+  let ax=0,ay=0;
+  if(keys['w']||keys['arrowup'])ay-=1; if(keys['s']||keys['arrowdown'])ay+=1;
+  if(keys['a']||keys['arrowleft'])ax-=1; if(keys['d']||keys['arrowright'])ax+=1;
+  const weight=1-player.carry.length*0.12;
+  const sp=player.speed*sprint*Math.max(0.55,weight);
+  const nx=player.x+ax*sp, ny=player.y+ay*sp;
+  const hit=collide(ax?nx:player.x, ay?ny:player.y, player.r);
+  if(hit){
+    const impact=Math.hypot(ax*sp,ay*sp);
+    if(impact>2.2 && player.carry.length){
+      for(const e of player.carry){ const dmg=Math.round((impact-2)*12*e.frag); e.integrity=Math.max(5,e.integrity-dmg); }
+      beep(140,0.2,'sawtooth',0.12); toast('💥 Angestoßen! Integrität sinkt — langsamer!');
+      player.wobble=12;
+      if(player.carry.some(e=>e.integrity<=5)) log('Ein Echo zerfällt fast!');
+    }
+    // slide: try single axis
+    if(!collide(nx,player.y,player.r)) player.x=nx;
+    else if(!collide(player.x,ny,player.r)) player.y=ny;
+  } else { player.x=ax?nx:player.x; player.y=ay?ny:player.y; }
+  player.x=Math.max(20,Math.min(W-20,player.x)); player.y=Math.max(20,Math.min(H-20,player.y));
+  player.wobble=Math.max(0,player.wobble-1);
+  if(sprint>1&&player.carry.length&&(ax||ay)&&Math.random()<0.06){
+    for(const e of player.carry) e.integrity=Math.max(5,e.integrity-1);
+    renderCarry();
+  }
+  // fog damage near edge
+  const fogR=380*(1-fogT*0.55);
+  const dC=Math.hypot(player.x-400,player.y-250);
+  if(dC>fogR && player.carry.length && Math.random()<0.02){
+    const e=player.carry[Math.floor(Math.random()*player.carry.length)];
+    e.integrity=Math.max(5,e.integrity-2); renderCarry();
+  }
+}
+function endDay(){
+  gameOver=true; running=false; bpOpen=false;
+  document.getElementById('backpackModal').style.display='none';
+  beep(220,0.5,'sine',0.2);
+  const o=document.getElementById('overlay'); o.style.display='flex';
+  o.querySelector('#ovBox').innerHTML=`<h2>Der Tag verblasst.</h2>
+    <p>Extrahiert: <b>${extractedScore}◆</b> · Best heute: <b>${best}◆</b> · Seed: ${seedStr}</p>
+    <p style="font-size:14px">Morgen (neuer Daily-Seed) formt sich die Stadt neu. Teile deinen Score — gleiche Karte für alle heute!</p>
+    <p class="novel">Noch nie dagewesen? Genau: Cozy-Extraction + Zerbrechlichkeit + Rucksack-Combo + Zeit-Budget. Kein Shooter, kein Deckbuilder, kein Farming.</p>
+    <button onclick="location.reload()" style="font-size:16px;padding:12px 22px">↻ Noch ein Tag</button>`;
+  log('Tag endet. Score: '+extractedScore);
+}
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  // floor
+  const g=ctx.createRadialGradient(400,250,60,400,250,500);
+  g.addColorStop(0,'#18224a'); g.addColorStop(1,'#0a0f1f');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  // fog
+  const fogR=380*(1-fogT*0.55);
+  ctx.save();
+  ctx.fillStyle='rgba(120,130,180,0.18)';
+  ctx.beginPath(); ctx.rect(0,0,W,H); ctx.arc(400,250,fogR,0,7,true); ctx.fill('evenodd');
+  ctx.restore();
+  // walls
+  ctx.fillStyle='#2b3a6e'; ctx.strokeStyle='#4a5fa0';
+  for(const wl of walls){ ctx.beginPath(); ctx.roundRect(wl.x,wl.y,wl.w,wl.h,6); ctx.fill(); ctx.stroke(); }
+  // portal
+  const t=performance.now()/1000;
+  ctx.save();
+  const pg=ctx.createRadialGradient(portal.x,portal.y,4,portal.x,portal.y,portal.r+18);
+  pg.addColorStop(0,'#fff7cc'); pg.addColorStop(0.4,'#ffd166'); pg.addColorStop(1,'rgba(255,209,102,0)');
+  ctx.fillStyle=pg; ctx.beginPath(); ctx.arc(portal.x,portal.y,portal.r+14+Math.sin(t*3)*4,0,7); ctx.fill();
+  ctx.fillStyle='#0d1321'; ctx.font='bold 11px system-ui'; ctx.textAlign='center';
+  ctx.fillStyle='#111'; ctx.beginPath(); ctx.arc(portal.x,portal.y,portal.r-8,0,7); ctx.fillStyle='#ffd166'; ctx.fill();
+  ctx.fillStyle='#111'; ctx.fillText('PORTAL',portal.x,portal.y+4);
+  ctx.restore();
+  // echoes
+  for(const e of echoes){
+    if(e.taken||e.extracted) continue;
+    const bob=Math.sin(t*2+e.phase)*4;
+    ctx.save();
+    ctx.shadowColor=e.color; ctx.shadowBlur=16;
+    ctx.fillStyle=e.color;
+    ctx.beginPath(); ctx.arc(e.x,e.y+bob,11,0,7); ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.fillStyle='#0d1321'; ctx.font='bold 12px system-ui'; ctx.textAlign='center';
+    ctx.fillText('✦',e.x,e.y+bob+4);
+    ctx.fillStyle='#fff'; ctx.font='11px system-ui';
+    ctx.fillText(e.name,e.x,e.y+bob-18);
+    ctx.restore();
+  }
+  // dropped echoes (not taken but moved)
+  // player
+  ctx.save();
+  const wob=player.wobble>0?Math.sin(t*30)*3:Math.sin(t*4)*1;
+  const carryN=player.carry.length;
+  ctx.translate(player.x+wob,player.y);
+  ctx.shadowColor=carryN?'#ffd166':'#6ff7d6'; ctx.shadowBlur=14;
+  ctx.fillStyle=carryN?'#ffd166':'#6ff7d6';
+  ctx.beginPath(); ctx.arc(0,0,player.r,0,7); ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.fillStyle='#0d1321'; ctx.font='bold 13px system-ui'; ctx.textAlign='center';
+  ctx.fillText(carryN?('◉'+carryN):'☺',0,5);
+  // carried orbs above
+  player.carry.forEach((e,i)=>{
+    ctx.fillStyle=e.color; ctx.beginPath(); ctx.arc(-16+i*16,-20+Math.sin(t*5+i)*3,7,0,7); ctx.fill();
+    ctx.fillStyle='#111'; ctx.font='8px system-ui'; ctx.fillText(Math.round(e.integrity)+'%',-16+i*16,-17+Math.sin(t*5+i)*3);
+  });
+  ctx.restore();
+  // HUD timer bar
+  ctx.fillStyle='#222c55'; ctx.fillRect(14,14,200,10);
+  ctx.fillStyle=timeLeft<30?'#ef476f':'#6ff7d6'; ctx.fillRect(14,14,200*(timeLeft/180),10);
+}
+function frame(now){
+  const dt=Math.min(50,now-last); last=now;
+  update(dt); draw();
+  requestAnimationFrame(frame);
+}
+renderCarry();
+requestAnimationFrame(frame);
+log('Prototyp geladen. Seed '+seedStr+'.');
+})();
+</script>
+</body>
+</html>
